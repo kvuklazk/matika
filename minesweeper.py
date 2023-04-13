@@ -14,8 +14,9 @@ class App:
         self.platno = Canvas(height=self.height, width=self.width)
         self.platno.pack()
 
-        self.velikost_pole = 25  # 100x100
-        self.pocet_min = 2
+        self.velikost_pole = 15  # 100x100
+        self.pocet_min = 10
+
 
         self.pole = []
         for i in range(self.velikost_pole):
@@ -45,7 +46,7 @@ class App:
             self.platno.create_line(self.left, self.top + i * self.velikost_policka, self.right,
                                     self.top + i * self.velikost_policka)
 
-        self.pocet_oznacenych_min = 0
+        self.oznacene_miny = []
 
         self.okno.bind("<Button-1>", self.napravyklik)
         self.okno.bind("<Button-3>", self.nalevyklik)
@@ -61,22 +62,45 @@ class App:
             return
 
     def nakresli_vlajecku(self, x, y):
+        je_oznacena = []
+        for i in self.oznacene_miny:
+            print(i[0], i[1])
+            if i[0] == x and i[1] == y:
+                je_oznacena = i
+        print(je_oznacena)
+        if self.pole[y][x] == 2:
+            return
+        if len(je_oznacena) != 0:
+            self.platno.delete(i[2][0])
+            self.platno.delete(i[2][1])
+            self.oznacene_miny.remove(je_oznacena)
+            print("deleting")
+            return
+
+        l, t = self.kresli_vlajku(x, y)
+
+        self.oznacene_miny.append([x, y, [l, t]])
+
+    def kresli_vlajku(self, x, y):
         x = self.preved_souradnice_x(x)
         y = self.preved_souradnice_y(y)
-
-        self.platno.create_line(x+self.velikost_policka/2, y + self.velikost_policka * 9/12,
-                                x+self.velikost_policka/2, y + self.velikost_policka * 2/12)
-        self.platno.create_polygon(x+self.velikost_policka/2, y + self.velikost_policka * 2/12,
-                                   x+self.velikost_policka/2 + self.velikost_policka * 4.5/12, y + self.velikost_policka * 4/12,
-                                   x+self.velikost_policka/2, y + self.velikost_policka * 1/2, fill="green")
-        self.pocet_oznacenych_min += 1
+        line = self.platno.create_line(x + self.velikost_policka / 2, y + self.velikost_policka * 9 / 12,
+                                       x + self.velikost_policka / 2, y + self.velikost_policka * 2 / 12)
+        triangle = self.platno.create_polygon(x + self.velikost_policka / 2,
+                                              y + self.velikost_policka * 2 / 12,
+                                              x + self.velikost_policka / 2 + self.velikost_policka * 4.5 / 12,
+                                              y + self.velikost_policka * 4 / 12,
+                                              x + self.velikost_policka / 2,
+                                              y + self.velikost_policka * 1 / 2, fill="green")
+        print(line, triangle)
+        return line, triangle
 
     def vyhral_jsi_otazka(self):
         for y in self.pole:
             for x in y:
                 if not (x == 1 or x == 2):
                     return False
-        if self.pocet_oznacenych_min == self.pocet_min:
+        if len(self.oznacene_miny) == self.pocet_min:
             return True
         return False
 
@@ -86,8 +110,7 @@ class App:
         if not self.velikost_pole > x >= 0 and self.velikost_pole > y >= 0:
             return
 
-
-        self.nakresli_veshny_miny()
+        # self.nakresli_veshny_miny()
         if self.pole[y][x] == 1:
             self.end()
             return
