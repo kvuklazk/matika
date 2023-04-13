@@ -1,78 +1,84 @@
-from tkinter import *
+matrix = [[1, -1, 2], [2, 0, 3], [0, 1, -1]]
+matrix1 = []
+for row in range(len(matrix)):
+    matrix1.append([])
+    for column in range(len(matrix)):
+        if row == column:
+            matrix1[row].append(1)
+        else:
+            matrix1[row].append(0)
+
+def log_matrix(matrix_to_print: list = None):
+    gap = 0
+    # get length of biggest number
+    for p in matrix_to_print:
+        for x in p:
+            if len(str(x)) > gap:
+                gap = len(str(x))
+    gap += 1
+    line_length = gap * (len(matrix_to_print[0]) + 1) + 4 + 3
+
+    print("-" * 3, " " * (line_length - 6), "-" * 3)
+    for rowe in range(len(matrix_to_print)):
+        print("|", end="")
+        for columne in range(len(matrix_to_print[0])-3):
+            print(" " * (gap-len(str(matrix_to_print[rowe][columne]))), matrix_to_print[rowe][columne], end="")
+        print("  |", end="")
+        for columne in range(-3, 0):
+            print(" " * (gap-len(str(matrix_to_print[rowe][columne]))), matrix_to_print[rowe][columne], end="")
+        print(" |")
+    print("-" * 3, " " * (line_length - 6), "-" * 3)
 
 
-def destroy_all(win):
-    for widget in win.winfo_children():
-        widget.destroy()
+for row in range(len(matrix1)):
+    for column in range(len(matrix1[row])):
+        matrix[row].append(matrix1[row][column])
 
 
-class MyWindow:
-    def __init__(self, win):
-        self.win = win
+log_matrix(matrix)
 
-        # self.row = 0
-        # self.column = 0
-        self.len = 0
-        self.text_widgets = []
+# bottom triangle
+# i - column that wants to be 0
+for i in range(0, len(matrix) - 1):
+    for row in range(i + 1, len(matrix)):
+        if matrix[row][i] == 0:
+            continue
 
-        # self.lbl_row = Label(win, text='Number of rows:')
-        # self.lbl_column = Label(win, text='Number of columns:')
-        self.lbl_len = Label(win, text='Height of matrix:')
-        # self.e_row = Entry(win)
-        # self.e_column = Entry(win)
-        self.e_len = Entry(win)
-        self.enter = Button(win, text='Enter', command=self.enter_row_column)
+        multiplier = matrix[row][i] / -matrix[i][i]
 
-        # self.lbl_row.grid(row=0, column=0)
-        # self.lbl_column.grid(row=1, column=0)
-        self.lbl_len.grid(row=0, column=0)
-        self.enter.grid(row=3, column=1)
-        self.e_len.grid(row=0, column=1)
+        for column in range(len(matrix[0])):
+            matrix[row][column] = (multiplier * matrix[i][column]) + matrix[row][column]
 
-        # self.e_row.grid(row=0, column=1)
-        # self.e_column.grid(row=1, column=1)
+            if matrix[row][column] == round(matrix[row][column]):
+                matrix[row][column] = int(matrix[row][column])
+        log_matrix(matrix)
 
-        lbl_inst = Label(self.win, text='Enter matrix (one entry - one number):')
+print("diagonal")
 
-    def enter_row_column(self):
-        # self.row = int(self.e_row.get())
-        # self.column = int(self.e_column.get())
-        self.len = int(self.e_len.get())
-        destroy_all(self.win)
+# make the diagonal all ones
+for row in range(0, len(matrix)):
+    multiplier = 1 / matrix[row][row]
+    for column in range(len(matrix[row])):
+        matrix[row][column] = matrix[row][column] * multiplier
+        if matrix[row][column] == round(matrix[row][column]):
+            matrix[row][column] = int(matrix[row][column])
 
-        lbl_inst = Label(self.win, text='Enter matrix (one entry - one number):')
-        lbl_inst.grid(row=0, column=0, columnspan=self.len+1)
+log_matrix(matrix)
 
-        self.text_widgets = self.create_e_for_matrix(self.len, self.len)
+print("top triangle")
+# top triangle
+for i in range(-4, -len(matrix[0]), -1):
+    for row in range(i+2, -len(matrix)- 1, -1):
+        if matrix[row][i] == 0:
+            continue
 
-        self.enter = Button(self.win, text='Enter', command=self.enter_matrix)
-        self.enter.grid(row=self.len+1, column=0, columnspan=self.len+1)
+        multiplier = matrix[row][i] / -matrix[i+3][i]
+        for column in range(len(matrix[0])):
+            matrix[row][column] = (multiplier * matrix[i+3][column]) + matrix[row][column]
 
-    def enter_matrix(self):
-        matrix = []
-        for row in range(self.len):
-            matrix.append([])
-            for column in range(self.len):
-                matrix[row].append(self.text_widgets[row][column].get())
-        print(matrix)
+            if matrix[row][column] == round(matrix[row][column]):
+                matrix[row][column] = int(matrix[row][column])
 
-    def create_e_for_matrix(self, row, column):
-        text_widgets = []
-        for row in range(row):
-            text_widgets.append([])
-            for column in range(column+1):
-                e = Entry(self.win, width=15)
-                if column == self.len:
-                    e.grid(row=row + 1, column=column, padx=6, pady=2)
-                    text_widgets[row].append(e)
-                else:
-                    e.grid(row=row+1, column=column, padx=2, pady=2)
-                    text_widgets[row].append(e)
-        return text_widgets
+        log_matrix(matrix)
 
 
-window = Tk()
-mywin = MyWindow(window)
-window.title('Hello Python')
-window.geometry("400x300+10+10")
-window.mainloop()

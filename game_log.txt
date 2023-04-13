@@ -1,0 +1,24 @@
+C:\apc\python3-9-7\python.exe "C:/dev/Pycharm/matika/conway's game of life.py"
+0 0
+cell is one
+dies
+1 0
+cell is zero
+2 0
+cell is zero
+0 1
+cell is zero
+1 1
+cell is one
+dies
+2 1
+cell is one
+dies
+0 2
+cell is one
+lives
+1 2
+cell is one
+lives
+2 2
+cell is zero

@@ -1,5 +1,3 @@
-from tkinter import *
-
 matrix = [[1, -2, 1, 0], [2, 1, -3, 5], [4, -7, 1, -1]]
 
 
@@ -13,18 +11,18 @@ def log_matrix(matrix_to_print: list = None):
     gap += 1
     line_length = gap * (len(matrix_to_print[0]) + 1) + 4 + 3
 
-    print("-" * 3, " " * (line_length - 6), "-" * 3)
+    print("-" * 3, " " * (line_length - 4), "-" * 3)
     for rowe in range(len(matrix_to_print)):
         print("|", end="")
-        for columne in range(len(matrix_to_print[0])-1):
-            print(" " * (gap-len(str(matrix_to_print[rowe][columne]))), matrix_to_print[rowe][columne], end="")
+        for columne in range(len(matrix_to_print[0]) - 1):
+            print(" " * (gap - len(str(matrix_to_print[rowe][columne]))), matrix_to_print[rowe][columne], end="")
         print(" " * 2,
               "|",
-              " " * (gap-len(str(matrix_to_print[rowe][-1]))),
+              " " * (gap - len(str(matrix_to_print[rowe][-1]))),
               matrix_to_print[rowe][-1],
               " ",
               "|")
-    print("-" * 3, " " * (line_length - 6), "-" * 3)
+    print("-" * 3, " " * (line_length - 4), "-" * 3)
 
 
 def change_rows_matrix(matrix_to_change_rows: list = None, row1: int = 0, row2: int = 0):
@@ -45,7 +43,7 @@ def log_solution_matrix(matrix):
     letters = ["q", "w", "z", "y", "x"]
 
     print("( ", end="")
-    for i in range(-1, -len(matrix)-1, -1):
+    for i in range(-1, -len(matrix) - 1, -1):
         print(letters[i], end="")
         if i > -len(matrix):
             print(", ", end="")
@@ -56,6 +54,7 @@ def log_solution_matrix(matrix):
         if i < len(matrix) - 1:
             print(", ", end="")
     print(" )")
+
 
 log_matrix(matrix)
 
@@ -99,6 +98,5 @@ for i in range(-2, -len(matrix) - 1, -1):
             if matrix[row][column] == round(matrix[row][column]):
                 matrix[row][column] = int(matrix[row][column])
         log_matrix(matrix)
-        
-        
+
 log_solution_matrix(matrix)

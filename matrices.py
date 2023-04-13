@@ -106,31 +106,58 @@ class MatCalc:
         # self.column = 0
         self.len = 0
         self.text_widgets = []
+        self.matrix = []
+        self.mode = 'Menu'
 
+        self.start()
+
+        self.e_len = Entry(self.win)
+
+    def start(self, action=None):
+        destroy_all(self.win)
+        lbl = Label(self.win, text='Choose option')
+        lbl.grid(row=0, column=0, columnspan=2)
+
+        gaus_btn = Button(self.win, text="Gaussian elimination - g", command=lambda: self.entered_choise('g'))
+        gaus_btn.grid(row=1, column=0)
+
+        inverse_btn = Button(self.win, text="Inverse matrix - i", command=lambda: self.entered_choise('i'))
+        inverse_btn.grid(row=1, column=1)
+
+        self.win.bind('<g>', self.entered_choise) and self.win.bind('<i>', self.entered_choise)
+
+    def entered_choise(self, action=None):
+        if action.char == 'i' or action == 'i':
+            self.mode = 'Inverse'
+            self.row_col()
+        elif action.char == 'g' or action == 'g':
+            self.mode = 'Gaus'
+            self.row_col()
+
+    def row_col(self, action=None):
+        destroy_all(self.win)
         # self.lbl_row = Label(win, text='Number of rows:')
         # self.lbl_column = Label(win, text='Number of columns:')
-        self.lbl_len = Label(win, text='Height of matrix:')
+        lbl_len = Label(self.win, text='Height of matrix:')
         # self.e_row = Entry(win)
         # self.e_column = Entry(win)
-        vcmd = (win.register(validate_int),
+        vcmd = (self.win.register(validate_int),
                 '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
-        self.e_len = Entry(win, validate='key', validatecommand=vcmd)
-        self.enter = Button(win, text='Enter', command=self.enter_row_column)
+        self.e_len = Entry(self.win, validate='key', validatecommand=vcmd)
+        enter = Button(self.win, text='Enter', command=self.entered_row_column)
 
         # self.lbl_row.grid(row=0, column=0)
         # self.lbl_column.grid(row=1, column=0)
-        self.lbl_len.grid(row=0, column=0)
-        self.enter.grid(row=3, column=1)
+        lbl_len.grid(row=0, column=0)
+        enter.grid(row=3, column=1)
         self.e_len.grid(row=0, column=1)
+        self.e_len.focus_set()
 
         # self.e_row.grid(row=0, column=1)
         # self.e_column.grid(row=1, column=1)
+        self.win.bind('<Return>', self.entered_row_column)
 
-        lbl_inst = Label(self.win, text='Enter matrix (one entry - one number):')
-        self.win.bind('<Return>', lambda event: self.enter_row_column())
-
-    def enter_row_column(self):
-        self.win.bind('<Return>', lambda event: self.enter_matrix())
+    def entered_row_column(self, action):
         # self.row = int(self.e_row.get())
         # self.column = int(self.e_column.get())
         self.len = int(self.e_len.get())
@@ -141,29 +168,42 @@ class MatCalc:
 
         self.text_widgets = self.create_e_for_matrix(self.len, self.len)
 
-        self.enter = Button(self.win, text='Enter', command=self.enter_matrix)
-        self.enter.grid(row=self.len+1, column=0, columnspan=self.len+1)
+        e = Button(self.win, text='Enter', command=self.entered_matrix)
+        e.grid(row=self.len+1, column=0, columnspan=self.len+1)
+        self.win.bind('<Return>', lambda event: self.entered_matrix())
 
-    def enter_matrix(self):
-        matrix = []
+    def entered_matrix(self):
+        self.win.bind('<m>', self.start)
+        self.matrix = []
         for row in range(self.len):
-            matrix.append([])
+            self.matrix.append([])
             for column in range(self.len+1):
                 try:
-                    matrix[row].append(int(self.text_widgets[row][column].get()))
+                    self.matrix[row].append(int(self.text_widgets[row][column].get()))
                 except ValueError:
-                    matrix[row].append(float(self.text_widgets[row][column].get()))
+                    self.matrix[row].append(float(self.text_widgets[row][column].get()))
         destroy_all(self.win)
-        matrix = self.solve_matrix(matrix)
         self.text_widgets = []
         self.column = 0
-        solution = ""
-        for i in range(len(matrix)):
-            solution += str(matrix[i][-1])
-            if i < len(matrix)-1:
-                solution += ', '
-        labl = Label(self.win, text='K = {[ %s ]}' % solution)
-        labl.place(x=self.grid_size, y=self.grid_size*(4+len(matrix)))
+        if self.mode == 'Gaus':
+            self.win.bind('<g>', self.entered_choise)
+            self.matrix = self.solve_matrix(self.matrix)
+            solution = ""
+            for i in range(len(self.matrix)):
+                solution += str(self.matrix[i][-1])
+                if i < len(self.matrix)-1:
+                    solution += ', '
+            labl = Label(self.win, text='K = {[ %s ]}' % solution)
+            labl.place(x=self.grid_size, y=self.grid_size*(4+len(self.matrix)))
+        elif self.mode == 'Inverse':
+            self.matrix = self.inverse_matrix()
+            self.print_matrix_add(self.matrix)
+
+        gaussian_again = Button(self.win, text='Gaussian again - g', command=lambda: self.entered_choise('g'))
+        gaussian_again.place(x=self.grid_size, y=self.grid_size*(5+len(self.matrix)))
+
+        return_to_start = Button(self.win, text='Menu - m', command=self.start)
+        return_to_start.place(x=self.grid_size, y=self.grid_size*(6+len(self.matrix)))
 
     def print_matrix_add(self, matrix):
         lbl = Label(self.win, text='----')
@@ -204,6 +244,7 @@ class MatCalc:
                 else:
                     e.grid(row=row+1, column=column, padx=2, pady=2)
                     text_widgets[row].append(e)
+        text_widgets[0][0].focus_set()
         return text_widgets
 
     def solve_matrix(self, matrix):
@@ -225,10 +266,22 @@ class MatCalc:
                     if matrix[row][column] == round(matrix[row][column]):
                         matrix[row][column] = int(matrix[row][column])
                 self.print_matrix_add(matrix)
+                if row != len(matrix)-1:
+                    number_0s = 0
+                    for i in matrix[row][:len(matrix)+1]:
+                        print(type(row), type(len(matrix)+1))
+                        if matrix[row][i] == 0:
+                            number_0s += 1
+                    number_0s2 = 0
+                    for i in matrix[row+1][:len(matrix)]:
+                        if matrix[row+1][i] == 0:
+                            number_0s += 1
+                    if number_0s>number_0s2:
+                        change_rows_matrix(matrix, row, row+1)
 
         # make the diagonal all ones
-        for row in range(-1, -len(matrix) - 1, -1):
-            multiplier = 1 / matrix[row][row - 1]
+        for row in range(0, len(matrix)):
+            multiplier = 1 / matrix[row][row]
             for column in range(len(matrix[row])):
                 matrix[row][column] = matrix[row][column] * multiplier
                 if matrix[row][column] == round(matrix[row][column]):
@@ -253,9 +306,13 @@ class MatCalc:
 
         return matrix
 
+    def inverse_matrix(self, matrix):
+        return matrix
+
 
 window = Tk()
 my_win = MatCalc(window)
 window.title('Matrix Calculator')
+window.iconbitmap('C:\dev\Pycharm\matika\drawing.ico')
 window.geometry("700x700")
 window.mainloop()
