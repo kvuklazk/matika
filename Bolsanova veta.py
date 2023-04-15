@@ -12,7 +12,7 @@ def approx(a, b, func, n=1):
     fa = func(a)
     fb = func(b)
 
-    if abs(fa-fb) > 9999999999999:
+    if abs(fa)-abs(fb) > 9999999999999:
         return f"function doesn't have a root between {a} and {b}, it's not defined"
 
     if fa * fb > 0:
