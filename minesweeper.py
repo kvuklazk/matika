@@ -7,74 +7,142 @@ class App:
     def __init__(self):
         self.okno = Tk()
         self.okno.title("Mega dobry okno")
-        self.width = self.okno.winfo_screenwidth() - 100
-        self.height = self.okno.winfo_screenheight() - 100
+        self.width = self.okno.winfo_screenwidth()
+        self.height = self.okno.winfo_screenheight()
         self.okno.geometry("%dx%d" % (self.width, self.height))
+        self.okno.attributes('-fullscreen', True)
+        self.okno.bind("<Escape>", self.window_close)
+
+        self.velikost_pole = 15  # 100x100
+        self.pocet_min = 40
 
         self.platno = Canvas(height=self.height, width=self.width)
         self.platno.pack()
 
-        self.velikost_pole = 15  # 100x100
-        self.pocet_min = 10
+        self.oznacene_miny = []
 
+        self.okno.bind("<Button-3>", self.napravyklik)
+        self.okno.bind("<space>", self.start)
+
+        self.slide_pocet_min = Scale(self.platno,
+                                     from_=0, to=self.velikost_pole ** 2,
+                                     orient='horizontal',
+                                     command=self.set_value_pocet_min)
+        self.slide_pocet_min.set(self.pocet_min)
+        self.slider_miny_window = self.platno.create_window(10, 10, anchor=NW, window=self.slide_pocet_min)
+
+        self.slide_velikost_pole = Scale(self.platno,
+                                         from_=5, to=self.pocet_min+10,
+                                         orient='horizontal',
+                                         command=self.set_value_velikost_pole)
+        self.slide_velikost_pole.set(15)
+        self.slider_velikost_pole_window = self.platno.create_window(10, 100,
+                                                                     anchor=NW,
+                                                                     window=self.slide_velikost_pole)
+
+        self.mrizka = []
+        self.cislicka = []
+
+    def start(self, button, text_to_delete=None):
+        self.okno.unbind("<space>")
+        self.slide_velikost_pole.config(state='disabled')
+        self.slide_pocet_min.config(state='disabled')
+
+        for i in self.mrizka:
+            self.platno.delete(i)
+        self.mrizka = []
+
+        if text_to_delete:
+            self.platno.delete(text_to_delete)
+
+        for i in self.oznacene_miny:
+            self.platno.delete(i[2][0])
+            self.platno.delete(i[2][1])
+
+        self.oznacene_miny = []
+
+        for i in self.cislicka:
+            self.platno.delete(i)
 
         self.pole = []
+
         for i in range(self.velikost_pole):
             self.pole.append([0] * self.velikost_pole)
 
-        print(self.pole)
-
-        miny = self.pocet_min
-        while miny > 0:
-            x = randint(0, self.velikost_pole - 1)
-            y = randint(0, self.velikost_pole - 1)
-            if self.pole[y][x] != 1:
-                self.pole[y][x] = 1
-                miny -= 1
-
         self.velikost_policka = floor(self.height / self.velikost_pole)
+
         self.top = (self.height - self.velikost_policka * self.velikost_pole) / 2
         self.bottom = self.top + self.velikost_pole * self.velikost_policka
         self.left = self.width / 2 - self.velikost_policka * self.velikost_pole / 2
         self.right = self.width / 2 + self.velikost_policka * self.velikost_pole / 2
 
-        self.platno.create_rectangle(self.left, self.top, self.right, self.bottom)
+        self.mrizka.append(self.platno.create_rectangle(self.left, self.top, self.right, self.bottom))
 
         for i in range(1, self.velikost_pole):
-            self.platno.create_line(self.left + i * self.velikost_policka, self.top,
-                                    self.left + i * self.velikost_policka, self.bottom)
-            self.platno.create_line(self.left, self.top + i * self.velikost_policka, self.right,
-                                    self.top + i * self.velikost_policka)
+            self.mrizka.append(self.platno.create_line(self.left + i * self.velikost_policka, self.top,
+                                                       self.left + i * self.velikost_policka, self.bottom))
+            self.mrizka.append(self.platno.create_line(self.left, self.top + i * self.velikost_policka, self.right,
+                                                       self.top + i * self.velikost_policka))
+        self.okno.bind("<Button-1>", self.zacatek_vybirani_min)
 
-        self.oznacene_miny = []
+    def set_value_pocet_min(self, pocet):
+        self.pocet_min = int(pocet)
 
-        self.okno.bind("<Button-1>", self.napravyklik)
-        self.okno.bind("<Button-3>", self.nalevyklik)
+    def set_value_velikost_pole(self, pocet):
+        self.velikost_pole = int(pocet)
 
-    def nalevyklik(self, event):
-        x = floor((event.x - self.left) / self.velikost_policka)
-        y = floor((event.y - self.top) / self.velikost_policka)
-        if not self.velikost_pole > x >= 0 and self.velikost_pole > y >= 0:
+    def window_close(self, button):
+        self.okno.attributes('-fullscreen', False)
+
+    def zacatek_vybirani_min(self, event):
+        for i in self.pole:
+            for l in i:
+                if l == 2:
+                    return
+        x_klik, y_klik = self.coords_from_event(event)
+        if x_klik is None:
+            return
+
+        miny = self.pocet_min
+        while miny > 0:
+            x = randint(0, self.velikost_pole - 1)
+            y = randint(0, self.velikost_pole - 1)
+            if x_klik == x and y_klik == y:
+                continue
+            if self.pole[y][x] != 1:
+                self.pole[y][x] = 1
+                miny -= 1
+
+        self.odkryj(x_klik, y_klik)
+        self.okno.bind("<Button-1>", self.nalevyklik)
+
+    def napravyklik(self, event):
+        x, y = self.coords_from_event(event)
+        if x is None:
             return
         self.nakresli_vlajecku(x, y)
         if self.vyhral_jsi_otazka():
             self.vyhra()
             return
 
+    def coords_from_event(self, event):
+        x = floor((event.x - self.left) / self.velikost_policka)
+        y = floor((event.y - self.top) / self.velikost_policka)
+        if not self.velikost_pole > x >= 0 and self.velikost_pole > y >= 0:
+            return None, None
+        return x, y
+
     def nakresli_vlajecku(self, x, y):
         je_oznacena = []
         for i in self.oznacene_miny:
-            print(i[0], i[1])
             if i[0] == x and i[1] == y:
                 je_oznacena = i
-        print(je_oznacena)
         if self.pole[y][x] == 2:
             return
         if len(je_oznacena) != 0:
-            self.platno.delete(i[2][0])
-            self.platno.delete(i[2][1])
+            self.platno.delete(je_oznacena[2][0])
+            self.platno.delete(je_oznacena[2][1])
             self.oznacene_miny.remove(je_oznacena)
-            print("deleting")
             return
 
         l, t = self.kresli_vlajku(x, y)
@@ -92,7 +160,6 @@ class App:
                                               y + self.velikost_policka * 4 / 12,
                                               x + self.velikost_policka / 2,
                                               y + self.velikost_policka * 1 / 2, fill="green")
-        print(line, triangle)
         return line, triangle
 
     def vyhral_jsi_otazka(self):
@@ -104,13 +171,11 @@ class App:
             return True
         return False
 
-    def napravyklik(self, event):
-        x = floor((event.x - self.left) / self.velikost_policka)
-        y = floor((event.y - self.top) / self.velikost_policka)
-        if not self.velikost_pole > x >= 0 and self.velikost_pole > y >= 0:
+    def nalevyklik(self, event):
+        x, y = self.coords_from_event(event)
+        if x is None:
             return
 
-        # self.nakresli_veshny_miny()
         if self.pole[y][x] == 1:
             self.end()
             return
@@ -154,12 +219,8 @@ class App:
             for i in kontrola:
                 x_1 = x + i[0]
                 y_1 = y + i[1]
-                if not self.pole[y_1][x_1] == 2:
-                    if self.pocet_min_okolo_policka(x_1, y_1) == 0:
-                        self.odkryj(x_1, y_1)
-                    else:
-                        if not self.pole[y_1][x_1] == 1:
-                            self.nakresli_cislo(x_1, y_1, self.pocet_min_okolo_policka(x_1, y_1))
+                if self.pole[y_1][x_1] == 0:
+                    self.odkryj(x_1, y_1)
 
     def pocet_min_okolo_policka(self, x, y):
         pocet = 0
@@ -202,8 +263,9 @@ class App:
                         self.top + y * self.velikost_policka + self.velikost_policka / 2 + self.velikost_policka / 4)
 
     def nakresli_cislo(self, x, y, cislo):
-        self.platno.create_text(self.preved_souradnice_x(x) + self.velikost_policka / 2,
-                                self.preved_souradnice_y(y) + self.velikost_policka / 2, text=cislo)
+        self.cislicka.append(self.platno.create_text(self.preved_souradnice_x(x) + self.velikost_policka / 2,
+                                                     self.preved_souradnice_y(y) + self.velikost_policka / 2,
+                                                     text=cislo))
         self.pole[y][x] = 2
 
     def end(self):
@@ -211,12 +273,17 @@ class App:
         self.platno.create_text(self.width / 2, self.height / 2, text="Game Over")
         self.okno.unbind("<Button-1>")
         self.okno.unbind("<Button-3>")
+        self.okno.bind("<space>", self.start)
 
     def vyhra(self):
         print("vyhral jsi")
-        self.platno.create_text(self.width / 2, self.height / 2, text="Vyhral jsi")
+        text = self.platno.create_text(self.width / 2, self.height / 2, text="Vyhral jsi")
         self.okno.unbind("<Button-1>")
         self.okno.unbind("<Button-3>")
+        self.okno.bind("<space>", lambda x: self.start(text))
+        self.slide_pocet_min.config(state='active')
+        self.slide_velikost_pole.config(state='active')
+
 
 a = App()
 mainloop()

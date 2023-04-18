@@ -99,11 +99,12 @@ def find_root(eq: str = None, start=-10.0, end=10, step=0.75):
 
 print("Enter function as following: y= ... or f(x)= ...")
 
-gen = find_root("f(x)=tan(x) * log(10,x * x) * x", step=0.1)
+# "f(x)=tan(x) * log(x * x, 10) * x"
+gen = find_root(input(), step=0.1)
 first = gen.__next__()
 print()
 print(f"roots: {first}", end="")
 for value in gen:
     print(value, end=", ")
-print
+print()
 
